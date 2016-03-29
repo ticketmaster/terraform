@@ -269,7 +269,7 @@ func (v *UserVariable) FullKey() string {
 }
 
 func (v *UserVariable) GoString() string {
-	return fmt.Sprintf("*%#v", *v)
+	return fmt.Sprintf("xxxxx *%#v", *v)
 }
 
 // DetectVariables takes an AST root and returns all the interpolated
