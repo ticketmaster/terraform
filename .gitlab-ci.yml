@@ -1,0 +1,39 @@
+image: "golang:latest"
+
+variables:
+  MAVEN_REPO_BASE: "http://maven.platform.tm.tmcs:8081/nexus/content/repositories/releases/com/ticketmaster/cet/terraform"
+
+before_script:
+  - export TM_TF_VERSION=${CI_BUILD_REF_NAME}_`date "+%Y%m%d%H%M"`
+  - export ARTIFACT_NAME=tm_terraform-${TM_TF_VERSION}
+  - export XC_ARCH='amd64'
+  - mkdir -p $GOPATH/src/github.com/hashicorp/terraform
+  - cp -R /builds/AWS/terraform $GOPATH/src/github.com/hashicorp
+  - cd $GOPATH/src/github.com/hashicorp/terraform/
+  - go install
+  - apt update
+  - apt install -y zip
+
+build_tm_linux_amd64:
+  script:
+    - export XC_OS='linux'
+    - make bin
+    - mv pkg/linux_amd64.zip $ARTIFACT_NAME-linux_amd64.zip
+    - curl -v -u $MAVEN_USERNAME:$MAVEN_PASSWORD -T {$ARTIFACT_NAME-linux_amd64.zip} $MAVEN_REPO_BASE/${TM_TF_VERSION}/
+  except:
+    - master
+    - tm
+  only:
+    - branches@AWS/terraform
+
+build_tm_windows_amd64:
+  script:
+    - export XC_OS='windows'
+    - make bin
+    - mv pkg/windows_amd64.zip $ARTIFACT_NAME-windows_amd64.zip
+    - curl -v -u $MAVEN_USERNAME:$MAVEN_PASSWORD -T {$ARTIFACT_NAME-windows_amd64.zip} $MAVEN_REPO_BASE/${TM_TF_VERSION}/
+  except:
+    - master
+    - tm
+  only:
+    - branches@AWS/terraform
