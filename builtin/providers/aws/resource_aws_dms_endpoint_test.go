@@ -51,6 +51,44 @@ func TestAccAwsDmsEndpointBasic(t *testing.T) {
 	})
 }
 
+func TestAccAwsDmsEndpointDBNameOption(t *testing.T) {
+	resourceName := "aws_dms_endpoint.dms_endpoint"
+	randId := acctest.RandString(8)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: dmsEndpointDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: dmsEndpointConfigDBNameOption(randId),
+				Check: resource.ComposeTestCheckFunc(
+					checkDmsEndpointExists(resourceName),
+					resource.TestCheckResourceAttrSet(resourceName, "endpoint_arn"),
+				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"password"},
+			},
+			{
+				Config: dmsEndpointConfigUpdate(randId),
+				Check: resource.ComposeTestCheckFunc(
+					checkDmsEndpointExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "extra_connection_attributes", "extra"),
+					resource.TestCheckResourceAttr(resourceName, "password", "tftestupdate"),
+					resource.TestCheckResourceAttr(resourceName, "port", "3303"),
+					resource.TestCheckResourceAttr(resourceName, "ssl_mode", "none"),
+					resource.TestCheckResourceAttr(resourceName, "server_name", "tftestupdate"),
+					resource.TestCheckResourceAttr(resourceName, "username", "tftestupdate"),
+				),
+			},
+		},
+	})
+}
+
 func dmsEndpointDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "aws_dms_endpoint" {
@@ -147,6 +185,27 @@ resource "aws_dms_endpoint" "dms_endpoint" {
 		Add = "added"
 	}
 	username = "tftestupdate"
+}
+`, randId)
+}
+
+func dmsEndpointConfigDBNameOption(randId string) string {
+	return fmt.Sprintf(`
+resource "aws_dms_endpoint" "dms_endpoint" {
+	endpoint_id = "tf-test-dms-endpoint-%[1]s"
+	endpoint_type = "source"
+	engine_name = "aurora"
+	extra_connection_attributes = ""
+	password = "tftest"
+	port = 3306
+	server_name = "tftest"
+	ssl_mode = "none"
+	tags {
+		Name = "tf-test-dms-endpoint-%[1]s"
+		Update = "to-update"
+		Remove = "to-remove"
+	}
+	username = "tftest"
 }
 `, randId)
 }

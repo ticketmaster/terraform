@@ -32,7 +32,8 @@ func resourceAwsDmsEndpoint() *schema.Resource {
 			},
 			"database_name": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 			},
 			"endpoint_arn": {
 				Type:     schema.TypeString,
@@ -118,7 +119,6 @@ func resourceAwsDmsEndpointCreate(d *schema.ResourceData, meta interface{}) erro
 	conn := meta.(*AWSClient).dmsconn
 
 	request := &dms.CreateEndpointInput{
-		DatabaseName:       aws.String(d.Get("database_name").(string)),
 		EndpointIdentifier: aws.String(d.Get("endpoint_id").(string)),
 		EndpointType:       aws.String(d.Get("endpoint_type").(string)),
 		EngineName:         aws.String(d.Get("engine_name").(string)),
@@ -127,6 +127,15 @@ func resourceAwsDmsEndpointCreate(d *schema.ResourceData, meta interface{}) erro
 		ServerName:         aws.String(d.Get("server_name").(string)),
 		Tags:               dmsTagsFromMap(d.Get("tags").(map[string]interface{})),
 		Username:           aws.String(d.Get("username").(string)),
+	}
+
+	//	m := map[string]bool{"oracle": true, "postgres": true, "sqlserver": true, "sybase": true}
+	//	if m[*request.EngineName] {
+	//		request.DatabaseName = aws.String(d.Get("database_name").(string))
+	//	}
+
+	if v, ok := d.GetOk("database_name"); ok {
+		request.DatabaseName = aws.String(v.(string))
 	}
 
 	if v, ok := d.GetOk("certificate_arn"); ok {
@@ -201,11 +210,6 @@ func resourceAwsDmsEndpointUpdate(d *schema.ResourceData, meta interface{}) erro
 		hasChanges = true
 	}
 
-	if d.HasChange("database_name") {
-		request.DatabaseName = aws.String(d.Get("database_name").(string))
-		hasChanges = true
-	}
-
 	if d.HasChange("endpoint_type") {
 		request.EndpointType = aws.String(d.Get("endpoint_type").(string))
 		hasChanges = true
@@ -214,6 +218,10 @@ func resourceAwsDmsEndpointUpdate(d *schema.ResourceData, meta interface{}) erro
 	if d.HasChange("engine_name") {
 		request.EngineName = aws.String(d.Get("engine_name").(string))
 		hasChanges = true
+	}
+
+	if v, ok := d.GetOk("database_name"); ok {
+		request.DatabaseName = aws.String(v.(string))
 	}
 
 	if d.HasChange("extra_connection_attributes") {
