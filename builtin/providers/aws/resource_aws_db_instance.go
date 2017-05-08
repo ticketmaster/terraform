@@ -335,7 +335,6 @@ func resourceAwsDbInstance() *schema.Resource {
 				ForceNew: true,
 			},
 
-			// Add support for domain-joined RDS instances
 			"domain": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -417,14 +416,6 @@ func resourceAwsDbInstanceCreate(d *schema.ResourceData, meta interface{}) error
 			opts.OptionGroupName = aws.String(attr.(string))
 		}
 
-		if attr, ok := d.GetOk("domain"); ok {
-			opts.Domain = aws.String(attr.(string))
-		}
-
-		if attr, ok := d.GetOk("domain-iam-role-name"); ok {
-			opts.DomainIAMRoleName = aws.String(attr.(string))
-		}
-
 		log.Printf("[DEBUG] DB Instance Replica create configuration: %#v", opts)
 		_, err := conn.CreateDBInstanceReadReplica(&opts)
 		if err != nil {
@@ -491,14 +482,6 @@ func resourceAwsDbInstanceCreate(d *schema.ResourceData, meta interface{}) error
 
 		if attr, ok := d.GetOk("storage_type"); ok {
 			opts.StorageType = aws.String(attr.(string))
-		}
-
-		if attr, ok := d.GetOk("domain"); ok {
-			opts.Domain = aws.String(attr.(string))
-		}
-
-		if attr, ok := d.GetOk("domain-iam-role-name"); ok {
-			opts.DomainIAMRoleName = aws.String(attr.(string))
 		}
 
 		log.Printf("[DEBUG] DB Instance restore from snapshot configuration: %s", opts)
